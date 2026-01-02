@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Leave Management System - Technical Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .diagram-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .diagram-section h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .diagram-section p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .mermaid {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .legend {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .legend h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .legend ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .legend li {
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 20px;
+            }
+
+            .print-btn {
+                display: none;
+            }
+
+            .diagram-section {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Leave Management System<br>Technical Documentation</h1>
+
+        <!-- ER Diagram -->
+        <div class="diagram-section">
+            <h2>1. Entity-Relationship (ER) Diagram</h2>
+            <p>This diagram shows the actual MySQL database tables (users, leaves, notifications), their attributes, and relationships with foreign key constraints.</p>
+            
+            <div class="mermaid">
+erDiagram
+    USERS ||--o{ LEAVES : "submits"
+    LEAVES ||--o{ NOTIFICATIONS : "generates"
+    
+    USERS {
+        int id PK "AUTO_INCREMENT"
+        varchar name
+        varchar email UK
+        varchar password
+        enum role "employee, manager"
+        varchar department
+        int vacation_balance
+        int sick_balance
+        datetime created_at
+    }
+    
+    LEAVES {
+        int id PK "AUTO_INCREMENT"
+        int user_id FK
+        varchar user_name
+        varchar department
+        enum leave_type "vacation, sick, other"
+        date start_date
+        date end_date
+        text reason
+        enum status "pending, approved, rejected"
+        datetime submitted_at
+        text manager_comment
+        varchar approved_by
+        datetime approved_at
+        varchar rejected_by
+        datetime rejected_at
+    }
+    
+    NOTIFICATIONS {
+        int id PK "AUTO_INCREMENT"
+        varchar type
+        text message
+        int leave_id FK
+        varchar department
+        datetime created_at
+        boolean read
+    }
+            </div>
+
+            <div class="legend">
+                <h4>Tables & Relationships:</h4>
+                <ul>
+                    <li><strong>USERS Table:</strong> Stores all employee and manager data with role and department fields</li>
+                    <li><strong>LEAVES Table:</strong> Stores all leave requests with user_id foreign key and department field</li>
+                    <li><strong>NOTIFICATIONS Table:</strong> Stores system notifications with leave_id foreign key</li>
+                    <li><strong>USERS → LEAVES:</strong> One-to-Many (1:N) with FOREIGN KEY (user_id) REFERENCES users(id)</li>
+                    <li><strong>LEAVES → NOTIFICATIONS:</strong> One-to-Many (1:N) with FOREIGN KEY (leave_id) REFERENCES leaves(id)</li>
+                    <li><strong>Primary Keys:</strong> All tables use AUTO_INCREMENT integer primary keys</li>
+                    <li><strong>Indexes:</strong> email (UNIQUE), department, status for optimized queries</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- DFD Level 0 -->
+        <div class="diagram-section">
+            <h2>2. Data Flow Diagram (DFD) - Level 0 (Context Diagram)</h2>
+            <p>High-level overview showing the system boundary and external entities interacting with the leave management system.</p>
+            
+            <div class="mermaid">
+graph TB
+    subgraph External_Entities
+        E[Employee]
+        M[Manager]
+    end
+    
+    subgraph System["Leave Management System"]
+        LMS[Leave Management<br/>System]
+    end
+    
+    E -->|Submit Leave Request| LMS
+    E -->|Login Credentials| LMS
+    E -->|View Calendar| LMS
+    
+    LMS -->|Leave Status| E
+    LMS -->|Leave Balance| E
+    LMS -->|Real-time Notifications| E
+    
+    M -->|Approve/Reject Requests| LMS
+    M -->|Login Credentials| LMS
+    M -->|View Department Leaves| LMS
+    
+    LMS -->|Pending Requests| M
+    LMS -->|Department Calendar| M
+    LMS -->|Real-time Alerts| M
+    
+    style LMS fill:#667eea,stroke:#333,stroke-width:3px,color:#fff
+    style E fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
+    style M fill:#FF9800,stroke:#333,stroke-width:2px,color:#fff
+            </div>
+        </div>
+
+        <!-- DFD Level 1 -->
+        <div class="diagram-section">
+            <h2>3. Data Flow Diagram (DFD) - Level 1</h2>
+            <p>Detailed view of internal processes, data stores, and data flows within the system.</p>
+            
+            <div class="mermaid">
+graph TB
+    E[Employee]
+    M[Manager]
+    
+    subgraph Processes
+        P1[1.0<br/>Authentication]
+        P2[2.0<br/>Submit Leave<br/>Request]
+        P3[3.0<br/>Process Leave<br/>Approval]
+        P4[4.0<br/>Update Leave<br/>Balance]
+        P5[5.0<br/>Generate<br/>Notifications]
+        P6[6.0<br/>Display<br/>Calendar]
+    end
+    
+    subgraph Data_Stores
+        D1[(D1: users table)]
+        D2[(D2: leaves table)]
+        D3[(D3: notifications table)]
+    end
+    
+    E -->|Login Info| P1
+    M -->|Login Info| P1
+    P1 -->|Credentials| D1
+    D1 -->|User Data| P1
+    P1 -->|Session| E
+    P1 -->|Session| M
+    
+    E -->|Leave Details| P2
+    P2 -->|Store Request| D2
+    P2 -->|Trigger| P5
+    
+    D2 -->|Pending Leaves| M
+    M -->|Approval/Rejection| P3
+    P3 -->|Update Status| D2
+    P3 -->|Trigger Balance Update| P4
+    P3 -->|Trigger| P5
+    
+    P4 -->|Update Balance| D1
+    D1 -->|Current Balance| E
+    
+    P5 -->|Create Notification| D3
+    D3 -->|Alerts| E
+    D3 -->|Alerts| M
+    
+    E -->|Request Calendar| P6
+    M -->|Request Calendar| P6
+    D2 -->|Approved Leaves| P6
+    D1 -->|Department Filter| P6
+    P6 -->|Calendar View| E
+    P6 -->|Calendar View| M
+    
+    style P1 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style P2 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style P3 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style P4 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style P5 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style P6 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style D1 fill:#4CAF50,stroke:#333,stroke-width:2px
+    style D2 fill:#4CAF50,stroke:#333,stroke-width:2px
+    style D3 fill:#4CAF50,stroke:#333,stroke-width:2px
+    style E fill:#FF9800,stroke:#333,stroke-width:2px,color:#fff
+    style M fill:#FF9800,stroke:#333,stroke-width:2px,color:#fff
+            </div>
+
+            <div class="legend">
+                <h4>Process Descriptions:</h4>
+                <ul>
+                    <li><strong>1.0 Authentication:</strong> Validates user credentials against users table and creates session</li>
+                    <li><strong>2.0 Submit Leave Request:</strong> Processes employee submissions and stores in leaves table with foreign key</li>
+                    <li><strong>3.0 Process Leave Approval:</strong> Handles manager approval/rejection workflow with SQL transactions</li>
+                    <li><strong>4.0 Update Leave Balance:</strong> Adjusts vacation_balance or sick_balance in users table</li>
+                    <li><strong>5.0 Generate Notifications:</strong> Creates real-time notifications in notifications table</li>
+                    <li><strong>6.0 Display Calendar:</strong> Filters approved leaves by department using SQL JOIN and displays calendar</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- UML Class Diagram -->
+        <div class="diagram-section">
+            <h2>4. UML Class Diagram</h2>
+            <p>Object-oriented representation showing Flask application structure with MySQL database integration, data models, and their relationships.</p>
+            
+            <div class="mermaid">
+classDiagram
+    class User {
+        -int id
+        -string name
+        -string email
+        -string password
+        -string role
+        -string department
+        -int vacation_balance
+        -int sick_balance
+        -datetime created_at
+        +login(email, password) bool
+        +register(userData) User
+        +getProfile() dict
+        +updateBalance(leaveType, days) void
+    }
+    
+    class Employee {
+        +submitLeaveRequest(leaveData) Leave
+        +getMyRequests() List~Leave~
+        +viewCalendar() List~Leave~
+        +getLeaveBalance() dict
+    }
+    
+    class Manager {
+        +getPendingLeaves() List~Leave~
+        +getAllDepartmentLeaves() List~Leave~
+        +approveLeave(leaveId, comment) bool
+        +rejectLeave(leaveId, comment) bool
+        +viewDepartmentCalendar() List~Leave~
+        +getDepartmentManagers() List~Manager~
+    }
+    
+    class Leave {
+        -int id
+        -int user_id
+        -string user_name
+        -string department
+        -string leave_type
+        -date start_date
+        -date end_date
+        -string reason
+        -string status
+        -datetime submitted_at
+        -string manager_comment
+        -string approved_by
+        -datetime approved_at
+        -string rejected_by
+        -datetime rejected_at
+        +submit() bool
+        +approve(managerId, comment) bool
+        +reject(managerId, comment) bool
+        +calculateDuration() int
+        +getStatus() string
+    }
+    
+    class Notification {
+        -int id
+        -string type
+        -string message
+        -int leave_id
+        -string department
+        -datetime created_at
+        -bool read
+        +create(notificationData) Notification
+        +markAsRead() void
+        +sendToUser(userId) void
+        +sendToDepartment(department) void
+    }
+    
+    class FlaskApp {
+        -Flask app
+        -string SECRET_KEY
+        -SocketIO socketio
+        +route(path, methods) function
+        +loginRequired(func) decorator
+        +managerRequired(func) decorator
+        +handleRequest() response
+        +handleSession() session
+    }
+    
+    class SocketIOHandler {
+        -SocketIO socketio
+        +handleConnect() void
+        +handleDisconnect() void
+        +emitNewLeaveRequest(leaveData, room) void
+        +emitLeaveStatusUpdate(statusData, room) void
+        +joinRoom(userId) void
+        +joinManagerRoom(department) void
+    }
+    
+    class MySQLConnection {
+        -connection conn
+        -cursor cursor
+        -Database leave_management
+        +execute(query, params) cursor
+        +fetchOne(query, params) tuple
+        +fetchAll(query, params) list
+        +commit() void
+        +rollback() void
+        +close() void
+    }
+    
+    User <|-- Employee : inherits
+    User <|-- Manager : inherits
+    User "1" --> "0..*" Leave : submits
+    Manager "1" --> "0..*" Leave : approves/rejects
+    Leave "1" --> "0..*" Notification : generates
+    FlaskApp "1" --> "1" SocketIOHandler : uses
+    FlaskApp "1" --> "1" MySQLConnection : uses
+    MySQLConnection "1" --> "0..*" User : stores
+    MySQLConnection "1" --> "0..*" Leave : stores
+    MySQLConnection "1" --> "0..*" Notification : stores
+            </div>
+
+            <div class="legend">
+                <h4>Key Relationships:</h4>
+                <ul>
+                    <li><strong>Inheritance:</strong> Employee and Manager classes inherit from User (role-based distinction)</li>
+                    <li><strong>Association:</strong> User submits Leaves, Manager approves/rejects Leaves</li>
+                    <li><strong>Dependency:</strong> FlaskApp uses SocketIOHandler for real-time features</li>
+                    <li><strong>Storage:</strong> MySQLConnection manages all three tables with proper foreign key constraints</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- System Architecture -->
+        <div class="diagram-section">
+            <h2>5. System Architecture Diagram</h2>
+            <p>Technical architecture showing the technology stack, components, and their interactions.</p>
+            
+            <div class="mermaid">
+graph TB
+    subgraph Client["Client Layer (Browser)"]
+        HTML[HTML5 Templates<br/>Jinja2]
+        CSS[CSS3<br/>Custom Styles]
+        JS[JavaScript<br/>Vanilla JS + Socket.IO Client]
+    end
+    
+    subgraph Server["Application Server Layer"]
+        Flask[Flask Framework<br/>Python 3.x]
+        SocketIO[Flask-SocketIO<br/>Real-time Engine]
+        Routes[API Routes<br/>RESTful Endpoints]
+        Auth[Authentication<br/>Session Management]
+        Decorators[Decorators<br/>@login_required<br/>@manager_required]
+    end
+    
+    subgraph Database["Data Layer - MySQL"]
+        Users[(users table)]
+        Leaves[(leaves table)]
+        Notifications[(notifications table)]
+    end
+    
+    subgraph External["External Libraries"]
+        Werkzeug[Werkzeug<br/>Password Hashing]
+        CORS[Flask-CORS<br/>Cross-Origin]
+        MySQL[mysql-connector-python<br/>MySQL Driver]
+    end
+    
+    HTML --> Flask
+    CSS --> Flask
+    JS --> Flask
+    JS <-.->|WebSocket| SocketIO
+    
+    Flask --> Routes
+    Flask --> Auth
+    Routes --> Decorators
+    Auth --> Decorators
+    
+    Flask --> Werkzeug
+    Flask --> CORS
+    Flask --> MySQL
+    SocketIO --> Flask
+    
+    Routes --> Users
+    Routes --> Leaves
+    Routes --> Notifications
+    Auth --> Users
+    MySQL --> Users
+    MySQL --> Leaves
+    MySQL --> Notifications
+    
+    style Client fill:#E3F2FD,stroke:#2196F3,stroke-width:2px
+    style Server fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    style Database fill:#E8F5E9,stroke:#4CAF50,stroke-width:2px
+    style External fill:#F3E5F5,stroke:#9C27B0,stroke-width:2px
+    
+    style Flask fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
+    style Users fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
+    style Leaves fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
+    style Notifications fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
+            </div>
+
+            <div class="legend">
+                <h4>Technology Stack:</h4>
+                <ul>
+                    <li><strong>Frontend:</strong> HTML5, CSS3, Vanilla JavaScript, Socket.IO Client</li>
+                    <li><strong>Backend:</strong> Flask (Python 3.x), Flask-SocketIO, Flask-CORS</li>
+                    <li><strong>Database:</strong> MySQL 8.0+ with 3 tables (users, leaves, notifications) and foreign keys</li>
+                    <li><strong>Real-time:</strong> Socket.IO (WebSocket) for live notifications</li>
+                    <li><strong>Security:</strong> Werkzeug password hashing, Session-based authentication</li>
+                    <li><strong>Port:</strong> 5000 (Development), MySQL: 3306</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sequence Diagram -->
+        <div class="diagram-section">
+            <h2>6. Sequence Diagram - Leave Request Workflow</h2>
+            <p>Shows the complete interaction flow when an employee submits a leave request and a manager approves it.</p>
+            
+            <div class="mermaid">
+sequenceDiagram
+    actor E as Employee
+    participant UI as Web Interface
+    participant Flask as Flask Server
+    participant Users as users table
+    participant Leaves as leaves table
+    participant Notif as notifications table
+    participant Socket as SocketIO
+    actor M as Manager
+    
+    Note over E,M: Leave Request Submission
+    E->>UI: Fill leave form & submit
+    UI->>Flask: POST /api/leaves/submit
+    Flask->>Users: SELECT user WHERE id = session_user_id
+    Users-->>Flask: User data (department)
+    Flask->>Leaves: INSERT INTO leaves with user_id FK
+    Leaves-->>Flask: Leave ID
+    Flask->>Notif: INSERT INTO notifications
+    Flask->>Socket: Emit to managers_{department} room
+    Socket-->>M: Real-time notification
+    Flask-->>UI: Success response
+    UI-->>E: Show confirmation
+    
+    Note over E,M: Manager Approval Process
+    M->>UI: Open pending requests tab
+    UI->>Flask: GET /api/leaves/pending
+    Flask->>Users: Get manager department
+    Users-->>Flask: Manager department
+    Flask->>Leaves: SELECT * FROM leaves WHERE department AND status='pending'
+    Leaves-->>Flask: Filtered leave list
+    Flask-->>UI: Return leaves
+    UI-->>M: Display pending requests
+    
+    M->>UI: Approve leave + comment
+    UI->>Flask: POST /api/leaves/{id}/approve
+    Flask->>Leaves: UPDATE leaves SET status='approved' WHERE id
+    Flask->>Users: UPDATE users SET vacation_balance = balance - days
+    Users-->>Flask: Balance updated
+    Flask->>Socket: Emit to user_id room
+    Socket-->>E: Real-time status update
+    Flask-->>UI: Success response
+    UI-->>M: Show confirmation
+            </div>
+        </div>
+
+        <!-- Use Case Diagram -->
+        <div class="diagram-section">
+            <h2>7. Use Case Diagram</h2>
+            <p>Illustrates all functional requirements and interactions between actors and system use cases.</p>
+            
+            <div class="mermaid">
+graph TB
+    E[Employee]
+    M[Manager]
+    
+    subgraph System["Leave Management System"]
+        UC1[Login/Register]
+        UC2[Submit Leave Request]
+        UC3[View My Requests]
+        UC4[View Leave Balance]
+        UC5[View Team Calendar]
+        UC6[Receive Notifications]
+        UC7[Approve Leave]
+        UC8[Reject Leave]
+        UC9[View Pending Requests]
+        UC10[View All Department Leaves]
+        UC11[Add Manager Comments]
+        UC12[Logout]
+    end
+    
+    E --> UC1
+    M --> UC1
+    E --> UC2
+    E --> UC3
+    E --> UC4
+    E --> UC5
+    E --> UC6
+    E --> UC12
+    
+    M --> UC6
+    M --> UC7
+    M --> UC8
+    M --> UC9
+    M --> UC10
+    M --> UC5
+    M --> UC11
+    M --> UC12
+    
+    UC7 -.includes.-> UC11
+    UC8 -.includes.-> UC11
+    UC7 -.triggers.-> UC6
+    UC8 -.triggers.-> UC6
+    UC2 -.triggers.-> UC6
+    UC7 -.updates.-> UC4
+    
+    style E fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
+    style M fill:#FF9800,stroke:#333,stroke-width:2px,color:#fff
+    style UC1 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC2 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC3 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC4 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC5 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC6 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC7 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC8 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC9 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC10 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC11 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style UC12 fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+            </div>
+        </div>
+
+        <!-- State Diagram -->
+        <div class="diagram-section">
+            <h2>8. State Diagram - Leave Request Lifecycle</h2>
+            <p>Shows all possible states of a leave request and the transitions between them.</p>
+            
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> Draft: Employee fills form
+    Draft --> Submitted: Click Submit button
+    Submitted --> Pending: Saved to leaves table
+    
+    Pending --> UnderReview: Manager opens request
+    UnderReview --> Approved: Manager approves
+    UnderReview --> Rejected: Manager rejects
+    UnderReview --> Pending: Manager closes without action
+    
+    Approved --> Completed: Leave dates pass
+    Approved --> [*]: Archived
+    
+    Rejected --> [*]: Request closed
+    
+    note right of Pending
+        Status: "pending"
+        Notification sent to managers
+        By department filter
+    end note
+    
+    note right of Approved
+        Status: "approved"
+        Balance deducted
+        Appears in calendar
+    end note
+    
+    note right of Rejected
+        Status: "rejected"
+        Balance unchanged
+        Manager comment recorded
+    end note
+            </div>
+
+            <div class="legend">
+                <h4>State Details:</h4>
+                <ul>
+                    <li><strong>Draft:</strong> Form being filled by employee (not saved)</li>
+                    <li><strong>Submitted:</strong> Form validated and sent to server</li>
+                    <li><strong>Pending:</strong> Stored in leaves table, waiting for manager action</li>
+                    <li><strong>Under Review:</strong> Manager viewing the request details</li>
+                    <li><strong>Approved:</strong> Manager approved, balance deducted, shows in calendar</li>
+                    <li><strong>Rejected:</strong> Manager rejected with comment, no balance change</li>
+                    <li><strong>Completed:</strong> Approved leave dates have passed</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Workflow Diagram -->
+        <div class="diagram-section">
+            <h2>9. Complete System Workflow Diagram</h2>
+            <p>End-to-end workflow showing all user interactions, system processes, and decision points in the leave management system.</p>
+            
+            <div class="mermaid">
+flowchart TD
+    Start([User Opens System]) --> Login{User Type?}
+    
+    Login -->|Employee| EmpDash[Employee Dashboard]
+    Login -->|Manager| MgrDash[Manager Dashboard]
+    
+    subgraph Employee_Flow["Employee Workflow"]
+        EmpDash --> EmpMenu{Select Action}
+        EmpMenu -->|New Request| FillForm[Fill Leave Request Form]
+        EmpMenu -->|My Requests| ViewReq[View Request History]
+        EmpMenu -->|Calendar| ViewCal[View Team Calendar]
+        EmpMenu -->|Balance| CheckBal[Check Leave Balance]
+        
+        FillForm --> ValidateForm{Form Valid?}
+        ValidateForm -->|No| ShowError[Show Validation Error]
+        ShowError --> FillForm
+        ValidateForm -->|Yes| SubmitReq[Submit to Backend]
+        
+        SubmitReq --> SaveDB[(INSERT into leaves table)]
+        SaveDB --> NotifyMgr[Send Notification to Manager]
+        NotifyMgr --> ConfirmEmp[Show Confirmation to Employee]
+        ConfirmEmp --> EmpMenu
+        
+        ViewReq --> FetchReq[(SELECT from leaves by user_id)]
+        FetchReq --> DisplayReq[Display Request List]
+        DisplayReq --> EmpMenu
+        
+        ViewCal --> FetchCal[(SELECT from leaves and users by dept)]
+        FetchCal --> DisplayCal[Display Calendar View]
+        DisplayCal --> EmpMenu
+        
+        CheckBal --> FetchBal[(SELECT from users table)]
+        FetchBal --> DisplayBal[Show Vacation & Sick Balance]
+        DisplayBal --> EmpMenu
+    end
+    
+    subgraph Manager_Flow["Manager Workflow"]
+        MgrDash --> MgrMenu{Select Action}
+        MgrMenu -->|Pending| ViewPending[View Pending Requests]
+        MgrMenu -->|All Leaves| ViewAll[View All Department Leaves]
+        MgrMenu -->|Calendar| ViewMgrCal[View Department Calendar]
+        
+        ViewPending --> FetchPending[(SELECT pending from leaves by department)]
+        FetchPending --> DisplayPending[Display Pending List]
+        DisplayPending --> SelectReq[Select a Request]
+        
+        SelectReq --> ReviewDecision{Manager Decision?}
+        ReviewDecision -->|Approve| AddComment1[Add Approval Comment]
+        ReviewDecision -->|Reject| AddComment2[Add Rejection Comment]
+        ReviewDecision -->|Cancel| DisplayPending
+        
+        AddComment1 --> ApproveReq[POST /api/leaves/id/approve]
+        AddComment2 --> RejectReq[POST /api/leaves/id/reject]
+        
+        ApproveReq --> UpdateStatus1[(UPDATE leaves SET status='approved')]
+        UpdateStatus1 --> DeductBal[(UPDATE users SET balance)]
+        DeductBal --> NotifyEmp1[Real-time Notification to Employee]
+        NotifyEmp1 --> MgrMenu
+        
+        RejectReq --> UpdateStatus2[(UPDATE leaves SET status='rejected')]
+        UpdateStatus2 --> NotifyEmp2[Real-time Notification to Employee]
+        NotifyEmp2 --> MgrMenu
+        
+        ViewAll --> FetchAllDept[(SELECT all leaves by department)]
+        FetchAllDept --> DisplayAllLeaves[Display All Leaves]
+        DisplayAllLeaves --> MgrMenu
+        
+        ViewMgrCal --> FetchMgrCal[(SELECT approved leaves by dept)]
+        FetchMgrCal --> DisplayMgrCal[Display Department Calendar]
+        DisplayMgrCal --> MgrMenu
+    end
+    
+    subgraph Real_Time["Real-time Notifications (Socket.IO)"]
+        NotifyMgr -.WebSocket.-> SocketRoom1[managers_department room]
+        NotifyEmp1 -.WebSocket.-> SocketRoom2[user_id room]
+        NotifyEmp2 -.WebSocket.-> SocketRoom2
+        SocketRoom1 -.Live Update.-> MgrDash
+        SocketRoom2 -.Live Update.-> EmpDash
+    end
+    
+    EmpMenu -->|Logout| Logout[End Session]
+    MgrMenu -->|Logout| Logout
+    Logout --> End([Return to Login])
+    
+    style Start fill:#4CAF50,stroke:#333,stroke-width:3px,color:#fff
+    style End fill:#f44336,stroke:#333,stroke-width:3px,color:#fff
+    style EmpDash fill:#2196F3,stroke:#333,stroke-width:2px,color:#fff
+    style MgrDash fill:#FF9800,stroke:#333,stroke-width:2px,color:#fff
+    style SaveDB fill:#9C27B0,stroke:#333,stroke-width:2px,color:#fff
+    style UpdateStatus1 fill:#9C27B0,stroke:#333,stroke-width:2px,color:#fff
+    style UpdateStatus2 fill:#9C27B0,stroke:#333,stroke-width:2px,color:#fff
+    style DeductBal fill:#9C27B0,stroke:#333,stroke-width:2px,color:#fff
+    style SocketRoom1 fill:#00BCD4,stroke:#333,stroke-width:2px,color:#fff
+    style SocketRoom2 fill:#00BCD4,stroke:#333,stroke-width:2px,color:#fff
+            </div>
+
+            <div class="legend">
+                <h4>Workflow Key Points:</h4>
+                <ul>
+                    <li><strong>Employee Actions:</strong> Submit requests, view history, check balance, view team calendar</li>
+                    <li><strong>Manager Actions:</strong> Review pending requests, approve/reject with comments, view all department leaves</li>
+                    <li><strong>Real-time Features:</strong> Socket.IO rooms send instant notifications to relevant users</li>
+                    <li><strong>Database Operations:</strong> All CRUD operations on users, leaves, and notifications tables</li>
+                    <li><strong>Department Filtering:</strong> All queries filtered by department to ensure data isolation</li>
+                    <li><strong>Balance Management:</strong> Automatic deduction only on approval, no change on rejection</li>
+                    <li><strong>Session Management:</strong> Login required for all operations, role-based access control</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Database Schema -->
+        <div class="diagram-section">
+            <h2>9. Database Schema Diagram</h2>
+            <p>Detailed MySQL database schema showing all tables, columns, data types, constraints, and indexes.</p>
+            
+            <div class="mermaid">
+erDiagram
+    USERS ||--o{ LEAVES : "FK: user_id"
+    LEAVES ||--o{ NOTIFICATIONS : "FK: leave_id"
+    
+    USERS {
+        INT id PK "AUTO_INCREMENT"
+        VARCHAR_100 name "NOT NULL"
+        VARCHAR_120 email "UNIQUE, NOT NULL"
+        VARCHAR_255 password "NOT NULL, Hashed"
+        ENUM role "employee, manager"
+        VARCHAR_50 department "NOT NULL"
+        INT vacation_balance "DEFAULT 20"
+        INT sick_balance "DEFAULT 10"
+        DATETIME created_at "DEFAULT CURRENT_TIMESTAMP"
+    }
+    
+    LEAVES {
+        INT id PK "AUTO_INCREMENT"
+        INT user_id FK "REFERENCES users(id)"
+        VARCHAR_100 user_name "NOT NULL"
+        VARCHAR_50 department "NOT NULL"
+        ENUM leave_type "vacation, sick, other"
+        DATE start_date "NOT NULL"
+        DATE end_date "NOT NULL"
+        TEXT reason "NOT NULL"
+        ENUM status "pending, approved, rejected"
+        DATETIME submitted_at "DEFAULT CURRENT_TIMESTAMP"
+        TEXT manager_comment "NULL"
+        VARCHAR_100 approved_by "NULL"
+        DATETIME approved_at "NULL"
+        VARCHAR_100 rejected_by "NULL"
+        DATETIME rejected_at "NULL"
+    }
+    
+    NOTIFICATIONS {
+        INT id PK "AUTO_INCREMENT"
+        VARCHAR_50 type "NOT NULL"
+        TEXT message "NOT NULL"
+        INT leave_id FK "REFERENCES leaves(id)"
+        VARCHAR_50 department "NOT NULL"
+        DATETIME created_at "DEFAULT CURRENT_TIMESTAMP"
+        BOOLEAN read "DEFAULT 0"
+    }
+            </div>
+
+            <div class="legend">
+                <h4>MySQL Schema Details:</h4>
+                <ul>
+                    <li><strong>Primary Keys:</strong> All tables use AUTO_INCREMENT integer primary keys for efficient indexing</li>
+                    <li><strong>Foreign Keys:</strong> leaves.user_id → users.id, notifications.leave_id → leaves.id with ON DELETE CASCADE</li>
+                    <li><strong>Unique Constraints:</strong> users.email ensures no duplicate accounts</li>
+                    <li><strong>ENUM Types:</strong> role (employee/manager), leave_type (vacation/sick/other), status (pending/approved/rejected)</li>
+                    <li><strong>Indexes:</strong> email (UNIQUE), department, status for optimized SELECT queries</li>
+                    <li><strong>Default Values:</strong> created_at uses CURRENT_TIMESTAMP, balances set to 20/10 days</li>
+                    <li><strong>NOT NULL:</strong> Essential fields prevent incomplete data</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">📄 Print / Save as PDF</button>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+        });
+    </script>
+</body>
+</html>

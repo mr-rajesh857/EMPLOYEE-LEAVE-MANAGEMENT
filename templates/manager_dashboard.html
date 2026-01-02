@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard - Leave Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dashboard-page">
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="{{ url_for('static', filename='image.png') }}" alt="Hyscaler"
+                style="height: 32px; width: auto;">
+            <span>Leave Management</span>
+        </div>
+        <div class="nav-user">
+            <div class="notification-badge" id="notification-badge">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span class="badge" id="notification-count" style="display: none;">0</span>
+            </div>
+            <span id="user-name-display"></span>
+            <button class="btn btn-ghost" onclick="window.location.href='/logout'">Logout</button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <ul class="nav-menu">
+                <li class="nav-item active" data-tab="pending">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Pending Requests</span>
+                    <span class="badge" id="pending-badge">0</span>
+                </li>
+                <li class="nav-item" data-tab="all-requests">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span>All Requests</span>
+                </li>
+                <li class="nav-item" data-tab="calendar">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>Team Calendar</span>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <!-- Pending Requests Tab -->
+            <div id="pending-tab" class="tab-content active">
+                <h2>Pending Leave Requests</h2>
+                <div id="pending-requests-list" class="requests-list manager-view"></div>
+            </div>
+
+            <!-- All Requests Tab -->
+            <div id="all-requests-tab" class="tab-content">
+                <h2>All Leave Requests</h2>
+                <div class="filters">
+                    <select id="status-filter" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div id="all-requests-list" class="requests-list manager-view"></div>
+            </div>
+
+            <!-- Calendar Tab -->
+            <div id="calendar-tab" class="tab-content">
+                <div class="calendar-header">
+                    <h2>Team Leave Calendar</h2>
+                    <div class="calendar-controls">
+                        <button class="btn-icon" id="prev-month" title="Previous Month">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h3 id="current-month-year"></h3>
+                        <button class="btn-icon" id="next-month" title="Next Month">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <span class="legend-color vacation"></span>
+                        <span>Vacation</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color sick"></span>
+                        <span>Sick Leave</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color personal"></span>
+                        <span>Personal</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color other"></span>
+                        <span>Other</span>
+                    </div>
+                </div>
+                <div id="calendar-grid" class="calendar-grid"></div>
+                <div id="calendar-leave-list" class="calendar-leave-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approval-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Review Leave Request</h3>
+                <button class="modal-close" onclick="closeApprovalModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-details"></div>
+                <div class="form-group">
+                    <label for="manager-comment">Comment (Optional)</label>
+                    <textarea id="manager-comment" rows="3" placeholder="Add a comment..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeApprovalModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="rejectLeave()">Reject</button>
+                <button class="btn btn-primary" onclick="approveLeave()">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-toast" class="notification-toast"></div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/manager.js') }}"></script>
+</body>
+</html>
