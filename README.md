@@ -143,7 +143,3 @@ For production use:
 5. Configure HTTPS with SSL certificates
 6. Set up proper error logging
 7. Configure automated MySQL backups
-
-## License
-
-This project is open source and available for educational and commercial use.
